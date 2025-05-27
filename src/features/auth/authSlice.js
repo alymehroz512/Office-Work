@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 // Create login thunk
 export const loginUser = createAsyncThunk(
@@ -7,8 +8,12 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await axios.post('https://hivve.westus.cloudapp.azure.com/api/v1/auth/login', credentials);
-      // Store token in localStorage
-      localStorage.setItem('token', response.data.token);
+      // Store token in cookie with secure settings
+      Cookies.set('token', response.data.token, { 
+        expires: 7, // expires in 7 days
+        secure: true, // only transmitted over HTTPS
+        sameSite: 'strict' // CSRF protection
+      });
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Login failed');
@@ -16,8 +21,8 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Load token from localStorage for initial state
-const token = localStorage.getItem('token');
+// Load token from cookie for initial state
+const token = Cookies.get('token');
 
 const initialState = {
   user: null,
@@ -31,7 +36,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     logout: (state) => {
-      localStorage.removeItem('token'); // Remove token from localStorage
+      Cookies.remove('token'); // Remove token from cookies
       state.user = null;
       state.token = null;
       state.loading = false;

@@ -14,7 +14,7 @@ const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Redirect if already logged in
+  // Redirect if already logged in (now using cookie-based token)
   useEffect(() => {
     if (token) {
       navigate("/");

@@ -1,36 +1,24 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
-const BASE_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/AllUsers';
-const USER_DETAILS_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/UserDetails';
-const PATIENT_ACTION_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/PatientAction';
-const MANAGER_ACTION_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/ManagerAction';
-const RESEARCHER_ACTION_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/ResearcherAction';
-const UPDATE_USER_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/updateUser';
-const CREATE_USER_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/createUser';
-const REJECT_RESEARCHER_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/RejectResearcher';
-const APPROVE_USER_URL = 'https://hivve.westus.cloudapp.azure.com/api/v1/admin/approveUser';
-
-// Async thunk for fetching users
 export const fetchUsers = createAsyncThunk(
   'users/fetchUsers',
-  async ({ userType, selectedType, page, pageSize }, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  ({ userType, selectedType, page, pageSize }, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.get(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/AllUsers?page=${page}&pageSize=${pageSize}&userType=${userType}&selectedType=${selectedType}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.get(
-        `${BASE_URL}?page=${page}&pageSize=${pageSize}&userType=${userType}&selectedType=${selectedType}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       const users = (response.data.data[selectedType] || []).map(user => ({
         id: user._id,
         firstName: user.firstName,
@@ -50,355 +38,345 @@ export const fetchUsers = createAsyncThunk(
         userType,
         selectedType,
       };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to fetch: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for fetching user details
 export const fetchUserDetails = createAsyncThunk(
   'users/fetchUserDetails',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.get(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/UserDetails/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.get(
-        `${USER_DETAILS_URL}/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return response.data.data;
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to fetch user details: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for blocking a patient
 export const blockPatient = createAsyncThunk(
   'users/blockPatient',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/PatientAction/${userId}`,
+      { action: 'block' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${PATIENT_ACTION_URL}/${userId}`,
-        { action: 'block' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to block user: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for unblocking a patient
 export const unblockPatient = createAsyncThunk(
   'users/unblockPatient',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/PatientAction/${userId}`,
+      { action: 'unblock' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${PATIENT_ACTION_URL}/${userId}`,
-        { action: 'unblock' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to unblock user: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for blocking a manager
 export const blockManager = createAsyncThunk(
   'users/blockManager',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/ManagerAction/${userId}`,
+      { action: 'block' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${MANAGER_ACTION_URL}/${userId}`,
-        { action: 'block' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to block manager: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for unblocking a manager
 export const unblockManager = createAsyncThunk(
   'users/unblockManager',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/ManagerAction/${userId}`,
+      { action: 'unblock' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${MANAGER_ACTION_URL}/${userId}`,
-        { action: 'unblock' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to unblock manager: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for blocking a researcher
 export const blockResearcher = createAsyncThunk(
   'users/blockResearcher',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/ResearcherAction/${userId}`,
+      { action: 'block' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${RESEARCHER_ACTION_URL}/${userId}`,
-        { action: 'block' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to block researcher: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for unblocking a researcher
 export const unblockResearcher = createAsyncThunk(
   'users/unblockResearcher',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/ResearcherAction/${userId}`,
+      { action: 'unblock' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${RESEARCHER_ACTION_URL}/${userId}`,
-        { action: 'unblock' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to unblock researcher: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for updating a user
 export const updateUser = createAsyncThunk(
   'users/updateUser',
-  async ({ userId, firstName, lastName, password, role }, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  ({ userId, firstName, lastName, password, role }, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    const payload = { firstName, lastName };
+    if (password) payload.password = password;
+
+    return axios.patch(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/updateUser?id=${userId}&role=${role}`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const payload = { firstName, lastName };
-      if (password) payload.password = password;
-
-      const response = await axios.patch(
-        `${UPDATE_USER_URL}?id=${userId}&role=${role}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return response.data;
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to update user: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for creating a new manager
 export const createManager = createAsyncThunk(
   'users/createManager',
-  async ({ firstName, lastName, email, password }, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  ({ firstName, lastName, email, password }, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.post(
+      'https://hivve.westus.cloudapp.azure.com/api/v1/admin/createUser',
+      { firstName, lastName, email, password, role: 'manager' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.post(
-        CREATE_USER_URL,
-        { firstName, lastName, email, password, role: 'manager' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return response.data;
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to create manager: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for rejecting a researcher
 export const rejectResearcher = createAsyncThunk(
   'users/rejectResearcher',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.post(
+      `https://hivve.westus.cloudapp.azure.com/api/v1/admin/RejectResearcher/${userId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.post(
-        `${REJECT_RESEARCHER_URL}/${userId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to reject researcher: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
-// Async thunk for approving a researcher
 export const approveResearcher = createAsyncThunk(
   'users/approveResearcher',
-  async (userId, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const token = auth.token;
-      if (!token) {
-        return rejectWithValue({ message: 'No token available' });
+  (userId, { getState, rejectWithValue }) => {
+    const { auth } = getState();
+    const token = auth.token;
+    if (!token) {
+      return rejectWithValue({ message: 'No token available' });
+    }
+
+    return axios.patch(
+      'https://hivve.westus.cloudapp.azure.com/api/v1/admin/approveUser',
+      { userId, role: 'researcher' },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-
-      const response = await axios.patch(
-        `${APPROVE_USER_URL}`,
-        { userId, role: 'researcher' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+    )
+    .then(response => {
       return { ...response.data, userId };
-    } catch (error) {
+    })
+    .catch(error => {
       if (!error.response) {
         return rejectWithValue({ message: 'Failed to approve researcher: Server is unreachable' });
       }
       return rejectWithValue(error.response.data);
-    }
+    });
   }
 );
 
@@ -798,4 +776,5 @@ export const {
   clearUpdateResponse,
   clearCreateManagerResponse,
 } = userSlice.actions;
+
 export default userSlice.reducer;
