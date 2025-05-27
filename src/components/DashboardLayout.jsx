@@ -112,7 +112,7 @@ const DashboardLayout = () => {
       >
         <div className="d-flex align-items-center w-100">
           <button 
-            className="btn btn-primary me-2 fs-4 d-flex align-items-center justify-content-center border-0" 
+            className="btn btn-primary fs-4 d-flex align-items-center justify-content-center border-0" 
             onClick={toggleSidebar}
             data-testid="mobile-menu-btn"
             style={{
@@ -138,7 +138,7 @@ const DashboardLayout = () => {
             collapsed && isMobile ? "d-none" : ""
           }`}
           style={{
-            width: collapsed ? "90px" : "320px",
+            width: collapsed ? "92px" : "320px",
             transition: "width 0.3s",
             position: "fixed",
             top: "70px",
