@@ -104,86 +104,93 @@ const DashboardLayout = () => {
   const handleCancelLogout = () => setShowLogoutConfirm(false);
 
   return (
-    <div className="d-flex" style={{ minHeight: "100vh", position: "relative" }}>
-      {/* Sidebar */}
+    <div className="d-flex flex-column" style={{ minHeight: "100vh" }}>
+      {/* Header - Now at the very top */}
       <div
-        className={`bg-light p-3 border-end position-fixed top-0 bottom-0 start-0 ${
-          collapsed && isMobile ? "d-none" : ""
-        }`}
-        style={{
-          width: collapsed ? "100px" : "320px",
-          transition: "width 0.3s",
-          zIndex: 1040,
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
+        className="bg-primary p-3 d-flex align-items-center justify-content-between position-fixed w-100"
+        style={{ height: "70px", borderBottom: "1px solid #ddd", zIndex: 1041 }}
       >
-        <div className="mb-4">
+        <div className="d-flex align-items-center w-100">
           <button 
-            className="btn btn-primary w-100 fs-5" 
+            className="btn btn-primary me-2 fs-4 d-flex align-items-center justify-content-center border-0" 
             onClick={toggleSidebar}
             data-testid="mobile-menu-btn"
+            style={{
+              width: "40px",
+              height: "40px",
+              padding: 0
+            }}
           >
-            {collapsed ? "☰" : "←"}
+          <i className="bi bi-list text-white"></i>
           </button>
+          <h4 className="text-white flex-grow-1 m-0 text-center">
+            {headerTitles[getCurrentPage()] || getCurrentPage()}
+          </h4>
         </div>
-
-        {navItems.map((item) => (
-          <div
-            key={item.id}
-            className={`nav-item-custom d-flex align-items-center text-dark mb-2 ${
-              location.pathname === item.path ? "active" : ""
-            }`}
-            style={{ cursor: "pointer" }}
-            onClick={() => handleNavItemClick(item.path, item.label)}
-            data-testid={`nav-${item.id}`}
-          >
-            <i className={`${item.icon} me-3 mx-1`} style={{ fontSize: "1.2rem" }}></i>
-            {!collapsed && <span>{item.label}</span>}
-          </div>
-        ))}
+        <div style={{ width: "40px" }}></div>
       </div>
 
-      {/* Overlay for mobile */}
-      {!collapsed && isMobile && (
+      {/* Main content wrapper */}
+      <div className="d-flex" style={{ marginTop: "70px", minHeight: "calc(100vh - 70px)" }}>
+        {/* Sidebar - Now below header */}
         <div
-          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
-          style={{ zIndex: 1030 }}
-          onClick={toggleSidebar}
-        ></div>
-      )}
-
-      {/* Main Content */}
-      <div
-        className="flex-grow-1"
-        style={{
-          marginLeft: isMobile ? 0 : collapsed ? "100px" : "320px",
-          transition: "margin-left 0.3s",
-        }}
-      >
-        <div
-          className="bg-primary p-3 d-flex align-items-center justify-content-between"
-          style={{ height: "70px", borderBottom: "1px solid #ddd" }}
+          className={`bg-light border-end ${
+            collapsed && isMobile ? "d-none" : ""
+          }`}
+          style={{
+            width: collapsed ? "90px" : "320px",
+            transition: "width 0.3s",
+            position: "fixed",
+            top: "70px",
+            bottom: 0,
+            left: 0,
+            zIndex: 1040,
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
         >
-          <div className="d-flex align-items-center w-100">
-            {isMobile && (
-              <button 
-                className="btn btn-primary" 
-                onClick={toggleSidebar}
-                data-testid="mobile-menu-btn"
-              >
-                ☰
-              </button>
-            )}
-            <h4 className="text-white flex-grow-1 m-0 text-center">
-              {headerTitles[getCurrentPage()] || getCurrentPage()}
-            </h4>
-          </div>
-          <div style={{ width: "40px" }}></div>
+          {navItems.map((item) => (
+            <div
+              key={item.id}
+              className={`nav-item-custom d-flex align-items-center text-dark mb-2 mx-2 mt-2 ${
+                location.pathname === item.path ? "active" : ""
+              }`}
+              style={{ cursor: "pointer" }}
+              onClick={() => handleNavItemClick(item.path, item.label)}
+              data-testid={`nav-${item.id}`}
+            >
+              <i className={`${item.icon} me-3 mx-2`} style={{ fontSize: "1.2rem" }}></i>
+              {!collapsed && <span>{item.label}</span>}
+            </div>
+          ))}
         </div>
 
-        <div className="p-4">
-          <Outlet />
+        {/* Overlay for mobile */}
+        {!collapsed && isMobile && (
+          <div
+            className="position-fixed w-100 h-100 bg-dark bg-opacity-50"
+            style={{ 
+              zIndex: 1030,
+              top: "70px",
+              left: 0,
+              bottom: 0
+            }}
+            onClick={toggleSidebar}
+          ></div>
+        )}
+
+        {/* Main Content Area */}
+        <div
+          className="flex-grow-1"
+          style={{
+            marginLeft: isMobile ? 0 : collapsed ? "100px" : "320px",
+            transition: "margin-left 0.3s",
+            width: "100%"
+          }}
+        >
+          <div className="p-4">
+            <Outlet />
+          </div>
         </div>
       </div>
 
