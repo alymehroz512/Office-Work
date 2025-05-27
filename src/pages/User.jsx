@@ -385,7 +385,6 @@ const User = () => {
     unblockResponse = null,
     unblockError = null,
     showEditForm = false,
-    editUserId = null,
     updateLoading = false,
     updateResponse = null,
     updateError = null,

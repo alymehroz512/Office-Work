@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { loginUser } from "../features/auth/authSlice";
 
 const SignInForm = () => {
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { loading, error, token } = useSelector((state) => state.auth);
 
   const [role, setRole] = useState("admin");
   const [email, setEmail] = useState("");
@@ -12,7 +14,14 @@ const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const handleSubmit = (e) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    if (token) {
+      navigate("/");
+    }
+  }, [token, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setFormError("");
 
@@ -26,17 +35,20 @@ const SignInForm = () => {
       return;
     }
 
-    dispatch(loginUser({ role, email, password }));
+    try {
+      await dispatch(loginUser({ role, email, password })).unwrap();
+      navigate("/");
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
   };
 
   const getErrorMessage = () => {
     if (!error) return null;
-    if (
-      error.message?.includes("Failed to fetch")
-    ) {
+    if (error.includes("Failed to fetch")) {
       return "Failed to fetch";
     }
-    return error.message || "Login failed";
+    return error;
   };
 
   return (

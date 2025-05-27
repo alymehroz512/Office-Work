@@ -17,20 +17,61 @@ body {
 }
 
 /* Sidebar Styling */
-.nav-item-custom {
-  transition: background-color 0.2s ease;
-  border-radius: 5px;
-  padding: 8px 12px;
+.sidebar {
+  overflow-y: auto;
+  box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
 
-.nav-item-custom:hover {
-  background-color: #e0e0e0; /* grey on hover */
+.sidebar.collapsed .nav-item {
+  justify-content: center;
 }
 
-.nav-item-custom.active {
-  background-color: #d6d6d6; /* grey on selection */
+.nav-item {
+  transition: all 0.2s ease;
+  color: #333;
 }
 
+.nav-item:hover {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+.nav-item.active {
+  background-color: #dee2e6;
+  color: #000;
+}
+
+/* Sidebar Collapse Button */
+.sidebar .btn-light {
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease;
+}
+
+.sidebar .btn-light:hover {
+  background-color: #e9ecef;
+}
+
+.sidebar.collapsed .btn-light {
+  padding: 0.5rem !important;
+  justify-content: center !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 250px !important;
+  }
+  
+  .sidebar.collapsed {
+    display: none !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .sidebar {
+    width: 200px !important;
+  }
+}
 
 /* SignIn Styling */
 .SignInFormBackground {
@@ -96,10 +137,7 @@ h2.signin-heading {
   }
 }
 
-
-
 /* Loading Animations for application configuration, application status , bridge and test results */
-
 .skeleton-line {
   height: 18px;
   background: linear-gradient(90deg, #e0e0e0 25%, #f5f5f5 37%, #e0e0e0 63%);
@@ -116,3 +154,19 @@ h2.signin-heading {
     background-position: 400px 0;
   }
 }
+
+/* New Sidebar Styling */
+.nav-item-custom {
+  transition: background-color 0.2s ease;
+  border-radius: 5px;
+  padding: 8px 12px;
+}
+
+.nav-item-custom:hover {
+  background-color: #e0e0e0; /* grey on hover */
+}
+
+.nav-item-custom.active {
+  background-color: #d6d6d6; /* grey on selection */
+}
+
