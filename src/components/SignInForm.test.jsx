@@ -13,8 +13,12 @@ import axios from "axios";
 describe("SignInForm integration tests", () => {
   let store;
   let mock;
+  let consoleErrorSpy;
 
   beforeEach(() => {
+    // Spy on console.error and silence it
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    
     mock = new MockAdapter(axios);
     store = configureStore({
       reducer: {
@@ -33,6 +37,8 @@ describe("SignInForm integration tests", () => {
 
   afterEach(() => {
     mock.reset();
+    // Restore console.error
+    consoleErrorSpy.mockRestore();
   });
 
   it("renders all form elements correctly", () => {
