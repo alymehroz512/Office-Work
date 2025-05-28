@@ -1,15 +1,25 @@
 module.exports = {
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.js'],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '^@fortawesome/fontawesome-svg-core': '<rootDir>/__mocks__/fontawesome.js',
-    '^@fortawesome/free-solid-svg-icons': '<rootDir>/__mocks__/fontawesome.js',
-    '^@fortawesome/react-fontawesome': '<rootDir>/__mocks__/fontawesome.js',
-    "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    '\\.(gif|ttf|eot|svg|png)$': '<rootDir>/test/__mocks__/fileMock.js'
   },
   transform: {
-    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+    '^.+\\.(js|jsx)$': 'babel-jest'
   },
-  injectGlobals: true,
-};
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx}',
+    '!src/main.jsx',
+    '!src/vite-env.d.ts',
+    '!**/node_modules/**'
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  }
+}; 

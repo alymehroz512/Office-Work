@@ -26,28 +26,53 @@ const ApplicationConfigurationPage = () => {
     }
   }, [config]);
 
+  const createNotification = (message, type = 'success') => {
+    const notification = document.createElement("div");
+    notification.style.position = "fixed";
+    notification.style.top = "20px";
+    notification.style.right = "20px";
+    notification.style.maxWidth = "800px";
+    notification.style.backgroundColor = type === 'success' ? "#4caf50" : "#f44336";
+    notification.style.color = "#fff";
+    notification.style.padding = "15px 25px";
+    notification.style.borderRadius = "4px";
+    notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    notification.style.fontWeight = "500";
+    notification.style.zIndex = "9999";
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(100%)";
+    notification.style.transition = "all 0.5s ease-out";
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+    
+    // Force reflow to ensure transition works
+    notification.offsetHeight;
+    
+    // Show notification
+    notification.style.opacity = "1";
+    notification.style.transform = "translateX(0)";
+
+    return notification;
+  };
+
   const SuccessNotification = () => {
     useEffect(() => {
-      const notification = document.createElement("div");
-      notification.style.position = "fixed";
-      notification.style.top = "0";
-      notification.style.left = "0";
-      notification.style.width = "100%";
-      notification.style.backgroundColor = "green";
-      notification.style.color = "#fff";
-      notification.style.textAlign = "center";
-      notification.style.padding = "10px";
-      notification.style.fontWeight = "bold";
-      notification.style.zIndex = "1000";
-      notification.textContent = successMessage;
-      document.body.appendChild(notification);
+      const notification = createNotification(successMessage, 'success');
 
       const timer = setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
+        // Hide notification
+        notification.style.opacity = "0";
+        notification.style.transform = "translateX(100%)";
+        
+        // Remove notification after transition
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 500);
         dispatch(clearMessages());
-      }, 4000);
+      }, 5000); // Changed to 5 seconds
 
       return () => {
         clearTimeout(timer);
@@ -62,26 +87,21 @@ const ApplicationConfigurationPage = () => {
 
   const ErrorNotification = () => {
     useEffect(() => {
-      const notification = document.createElement("div");
-      notification.style.position = "fixed";
-      notification.style.top = "0";
-      notification.style.left = "0";
-      notification.style.width = "100%";
-      notification.style.backgroundColor = "red";
-      notification.style.color = "#fff";
-      notification.style.textAlign = "center";
-      notification.style.padding = "10px";
-      notification.style.fontWeight = "bold";
-      notification.style.zIndex = "1000";
-      notification.textContent = error;
-      document.body.appendChild(notification);
+      const notification = createNotification(error, 'error');
 
       const timer = setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
+        // Hide notification
+        notification.style.opacity = "0";
+        notification.style.transform = "translateX(100%)";
+        
+        // Remove notification after transition
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 500);
         dispatch(clearMessages());
-      }, 4000);
+      }, 5000); // Changed to 5 seconds
 
       return () => {
         clearTimeout(timer);
@@ -98,26 +118,21 @@ const ApplicationConfigurationPage = () => {
     useEffect(() => {
       if (!inputChangeMessage) return;
 
-      const notification = document.createElement("div");
-      notification.style.position = "fixed";
-      notification.style.top = "0";
-      notification.style.left = "0";
-      notification.style.width = "100%";
-      notification.style.backgroundColor = "green";
-      notification.style.color = "#fff";
-      notification.style.textAlign = "center";
-      notification.style.padding = "10px";
-      notification.style.fontWeight = "bold";
-      notification.style.zIndex = "1000";
-      notification.textContent = inputChangeMessage;
-      document.body.appendChild(notification);
+      const notification = createNotification(inputChangeMessage, 'success');
 
       const timer = setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
+        // Hide notification
+        notification.style.opacity = "0";
+        notification.style.transform = "translateX(100%)";
+        
+        // Remove notification after transition
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 500);
         setInputChangeMessage("");
-      }, 4000);
+      }, 5000); // Changed to 5 seconds
 
       return () => {
         clearTimeout(timer);
@@ -125,7 +140,7 @@ const ApplicationConfigurationPage = () => {
           document.body.removeChild(notification);
         }
       };
-    }, []);
+    }, [inputChangeMessage]);
 
     return null;
   };
@@ -148,6 +163,7 @@ const ApplicationConfigurationPage = () => {
     e.preventDefault();
     dispatch(updateConfig({ config: formValues })).then(() => {
       dispatch(fetchApplicationConfiguration());
+      setInputChangeMessage("Configuration updated successfully!");
     });
   };
 

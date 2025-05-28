@@ -21,12 +21,9 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-// Load token from cookie for initial state
-const token = Cookies.get('token');
-
 const initialState = {
   user: null,
-  token: token || null,
+  token: Cookies.get('token') || null,
   loading: false,
   error: null,
 };

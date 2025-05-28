@@ -3,6 +3,7 @@ import { describe, expect, it, beforeEach, afterEach, jest } from "@jest/globals
 import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { BrowserRouter, Routes, Route, MemoryRouter } from 'react-router-dom';
 import DashboardLayout from "./DashboardLayout";
 import authReducer from '../features/auth/authSlice';
 import dashboardReducer from '../features/dashboard/dashboardSlice';
@@ -16,11 +17,15 @@ jest.mock("../pages/Bridge", () => () => <div data-testid="bridge-page">Mock Bri
 jest.mock("../pages/TestResult", () => () => <div data-testid="test-result">Mock TestResult</div>);
 jest.mock("../pages/User", () => () => <div data-testid="user-page">Mock User</div>);
 
-// Mock dispatch
+// Mock dispatch and fetchDashboardData
 const mockDispatch = jest.fn();
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
   useDispatch: () => mockDispatch,
+}));
+
+jest.mock('../features/dashboard/dashboardSlice', () => ({
+  fetchDashboardData: jest.fn(() => ({ type: 'dashboard/fetchDashboardData' }))
 }));
 
 // Setup window resize mock
@@ -34,7 +39,7 @@ const mockResizeWindow = (width) => {
   window.dispatchEvent(new Event('resize'));
 };
 
-const renderComponent = (preloadedState = {}) => {
+const renderComponent = (preloadedState = {}, initialRoute = '/') => {
   const store = configureStore({
     reducer: {
       auth: authReducer,
@@ -47,9 +52,21 @@ const renderComponent = (preloadedState = {}) => {
   });
 
   return render(
-    <Provider store={store}>
-      <DashboardLayout />
-    </Provider>
+    <MemoryRouter initialEntries={[initialRoute]}>
+      <Provider store={store}>
+        <Routes>
+          <Route path="/*" element={<DashboardLayout />}>
+            <Route index element={<div data-testid="dashboard-page">Mock DashboardPage</div>} />
+            <Route path="app-config" element={<div data-testid="app-config">Mock AppConfig</div>} />
+            <Route path="app-status" element={<div data-testid="app-status">Mock AppStatus</div>} />
+            <Route path="bridge" element={<div data-testid="bridge-page">Mock Bridge</div>} />
+            <Route path="test-results" element={<div data-testid="test-result">Mock TestResult</div>} />
+            <Route path="users" element={<div data-testid="user-page">Mock User</div>} />
+            <Route path="login" element={<div data-testid="sign-in-form">Mock SignInForm</div>} />
+          </Route>
+        </Routes>
+      </Provider>
+    </MemoryRouter>
   );
 };
 
@@ -137,23 +154,15 @@ describe("DashboardLayout", () => {
     });
 
     it("shows SignInForm component after confirming Logout", async () => {
-      const mockStore = configureStore({
-        reducer: {
-          auth: authReducer,
-          dashboard: dashboardReducer,
-        },
-        preloadedState: {
-          auth: { token: null, user: null },
-        },
-      });
-
-      render(
-        <Provider store={mockStore}>
-          <DashboardLayout />
-        </Provider>
-      );
-
-      // Verify SignInForm is shown when there's no token
+      renderComponent();
+      
+      // Click logout button
+      fireEvent.click(screen.getByTestId("nav-logout"));
+      
+      // Confirm logout
+      fireEvent.click(screen.getByTestId("confirm-logout-btn"));
+      
+      // Should redirect to login
       expect(screen.getByTestId("sign-in-form")).toBeInTheDocument();
     });
 
@@ -217,6 +226,103 @@ describe("DashboardLayout", () => {
 
       // Should end up in correct state
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).not.toHaveClass("d-none");
+    });
+  });
+
+  describe("Header Behavior", () => {
+    it("updates header title based on current route", () => {
+      renderComponent();
+      
+      // Initial route should be dashboard
+      expect(screen.getByRole('heading')).toHaveTextContent("Dashboard");
+      
+      // Navigate to different pages and check title updates
+      fireEvent.click(screen.getByTestId("nav-app-config"));
+      expect(screen.getByRole('heading')).toHaveTextContent("Configuration Page");
+      
+      fireEvent.click(screen.getByTestId("nav-users"));
+      expect(screen.getByRole('heading')).toHaveTextContent("Users");
+    });
+
+    it("handles unknown routes gracefully", () => {
+      renderComponent({}, '/unknown-route');
+      expect(screen.getByRole('heading')).toHaveTextContent("Dashboard");
+    });
+  });
+
+  describe("Dashboard Data Fetching", () => {
+    it("fetches dashboard data on initial load", () => {
+      const { fetchDashboardData } = require('../features/dashboard/dashboardSlice');
+      renderComponent();
+      expect(mockDispatch).toHaveBeenCalledWith(fetchDashboardData());
+    });
+
+    it("doesn't fetch dashboard data without token", () => {
+      renderComponent({ auth: { token: null } });
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Mobile Overlay", () => {
+    beforeEach(async () => {
+      await act(async () => {
+        mockResizeWindow(500);
+      });
+    });
+
+    it("shows overlay when sidebar is open on mobile", () => {
+      renderComponent();
+      fireEvent.click(screen.getByTestId("mobile-menu-btn"));
+      const overlay = screen.getByTestId("mobile-overlay");
+      expect(overlay).toBeInTheDocument();
+      expect(overlay).toHaveClass("bg-dark", "bg-opacity-50");
+    });
+
+    it("closes sidebar when overlay is clicked", () => {
+      renderComponent();
+      fireEvent.click(screen.getByTestId("mobile-menu-btn")); // Open sidebar
+      const overlay = screen.getByTestId("mobile-overlay");
+      fireEvent.click(overlay);
+      expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).toHaveClass("d-none");
+    });
+  });
+
+  describe("Keyboard Navigation", () => {
+    it("allows navigation through sidebar items with keyboard", () => {
+      renderComponent();
+      const sidebarItems = screen.getAllByRole('button').filter(
+        item => item.getAttribute('data-testid')?.startsWith('nav-')
+      );
+      
+      // Focus first nav item
+      sidebarItems[0].focus();
+      expect(document.activeElement).toBe(sidebarItems[0]);
+      
+      // Simulate tab navigation
+      sidebarItems[0].blur();
+      sidebarItems[1].focus();
+      expect(document.activeElement).toBe(sidebarItems[1]);
+    });
+
+    it("handles Enter key on navigation items", () => {
+      renderComponent();
+      const userNavItem = screen.getByTestId("nav-users");
+      
+      userNavItem.focus();
+      fireEvent.keyDown(userNavItem, { key: 'Enter' });
+      expect(screen.getByTestId("user-page")).toBeInTheDocument();
+    });
+
+    it("handles Escape key to close modals", () => {
+      renderComponent();
+      
+      // Open logout modal
+      fireEvent.click(screen.getByTestId("nav-logout"));
+      expect(screen.getByText("Confirm Logout")).toBeInTheDocument();
+      
+      // Press Escape
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByText("Confirm Logout")).not.toBeInTheDocument();
     });
   });
 });

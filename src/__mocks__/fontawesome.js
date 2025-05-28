@@ -1,1 +1,0 @@
-export const FontAwesomeIcon = ({ icon }) => <i className={icon.className} />;

@@ -570,7 +570,6 @@ const userSlice = createSlice({
         state.blockResponse = action.payload;
         state.showBlockConfirm = false;
         state.blockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(blockPatient.rejected, (state, action) => {
         state.blockLoading = false;
@@ -589,7 +588,6 @@ const userSlice = createSlice({
         state.unblockResponse = action.payload;
         state.showUnblockConfirm = false;
         state.unblockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(unblockPatient.rejected, (state, action) => {
         state.unblockLoading = false;
@@ -608,7 +606,6 @@ const userSlice = createSlice({
         state.blockResponse = action.payload;
         state.showBlockConfirm = false;
         state.blockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(blockManager.rejected, (state, action) => {
         state.blockLoading = false;
@@ -627,7 +624,6 @@ const userSlice = createSlice({
         state.unblockResponse = action.payload;
         state.showUnblockConfirm = false;
         state.unblockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(unblockManager.rejected, (state, action) => {
         state.unblockLoading = false;
@@ -646,7 +642,6 @@ const userSlice = createSlice({
         state.blockResponse = action.payload;
         state.showBlockConfirm = false;
         state.blockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(blockResearcher.rejected, (state, action) => {
         state.blockLoading = false;
@@ -665,7 +660,6 @@ const userSlice = createSlice({
         state.unblockResponse = action.payload;
         state.showUnblockConfirm = false;
         state.unblockUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(unblockResearcher.rejected, (state, action) => {
         state.unblockLoading = false;
@@ -720,7 +714,6 @@ const userSlice = createSlice({
         state.rejectResponse = action.payload;
         state.showRejectConfirm = false;
         state.rejectUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(rejectResearcher.rejected, (state, action) => {
         state.rejectLoading = false;
@@ -739,7 +732,6 @@ const userSlice = createSlice({
         state.approveResponse = action.payload;
         state.showApproveConfirm = false;
         state.approveUserId = null;
-        state.users = state.users.filter(user => user.id !== action.payload.userId);
       })
       .addCase(approveResearcher.rejected, (state, action) => {
         state.approveLoading = false;

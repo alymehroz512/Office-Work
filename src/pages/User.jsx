@@ -40,26 +40,51 @@ import {
 } from "../features/users/userSlice";
 import "../index.css";
 
-const showNotification = (message, type = "success") => {
+const createNotification = (message, type = 'success') => {
   const notification = document.createElement("div");
   notification.style.position = "fixed";
-  notification.style.top = "0";
-  notification.style.left = "0";
-  notification.style.width = "100%";
-  notification.style.backgroundColor = type === "success" ? "green" : "red";
+  notification.style.top = "20px";
+  notification.style.right = "20px";
+  notification.style.maxWidth = "800px";
+  notification.style.backgroundColor = type === 'success' ? "#4caf50" : "#f44336";
   notification.style.color = "#fff";
-  notification.style.textAlign = "center";
-  notification.style.padding = "10px";
-  notification.style.fontWeight = "bold";
-  notification.style.zIndex = "1000";
+  notification.style.padding = "15px 25px";
+  notification.style.borderRadius = "4px";
+  notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+  notification.style.fontWeight = "500";
+  notification.style.zIndex = "9999";
+  notification.style.opacity = "0";
+  notification.style.transform = "translateX(100%)";
+  notification.style.transition = "all 0.5s ease-out";
   notification.textContent = message;
+
   document.body.appendChild(notification);
+  
+  // Force reflow to ensure transition works
+  notification.offsetHeight;
+  
+  // Show notification
+  notification.style.opacity = "1";
+  notification.style.transform = "translateX(0)";
+
+  return notification;
+};
+
+const showNotification = (message, type = "success") => {
+  const notification = createNotification(message, type);
 
   setTimeout(() => {
-    if (document.body.contains(notification)) {
-      document.body.removeChild(notification);
-    }
-  }, 4000);
+    // Hide notification
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(100%)";
+    
+    // Remove notification after transition
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 500);
+  }, 5000);
 };
 
 const EditUserForm = ({ user, onSubmit, onCancel, updateLoading }) => {
@@ -434,6 +459,24 @@ const User = () => {
     fetchUsersForTable();
   }, [fetchUsersForTable]);
 
+  // Add new useEffect for type changes
+  useEffect(() => {
+    // Refresh the list whenever user type or selected type changes
+    if (currentUserType && currentSelectedType) {
+      setIsTableLoading(true);
+      dispatch(
+        fetchUsers({
+          userType: currentUserType,
+          selectedType: currentSelectedType,
+          page: 1, // Reset to first page when switching types
+          pageSize,
+        })
+      ).finally(() => {
+        setIsTableLoading(false);
+      });
+    }
+  }, [currentUserType, currentSelectedType, dispatch, pageSize]);
+
   useEffect(() => {
     if (
       updateResponse ||
@@ -513,13 +556,11 @@ const User = () => {
     }[currentUserType];
 
     dispatch(blockAction(blockUserId)).then(() => {
-      dispatch(setSelectedType('blocked'));
-      dispatch(setPage(1));
       dispatch(
         fetchUsers({
           userType: currentUserType,
-          selectedType: 'blocked',
-          page: 1,
+          selectedType: currentSelectedType,
+          page: currentPage,
           pageSize,
         })
       );
@@ -534,13 +575,11 @@ const User = () => {
     }[currentUserType];
 
     dispatch(unblockAction(unblockUserId)).then(() => {
-      dispatch(setSelectedType('active'));
-      dispatch(setPage(1));
       dispatch(
         fetchUsers({
           userType: currentUserType,
-          selectedType: 'active',
-          page: 1,
+          selectedType: currentSelectedType,
+          page: currentPage,
           pageSize,
         })
       );
@@ -549,13 +588,11 @@ const User = () => {
 
   const handleConfirmApprove = () => {
     dispatch(approveResearcher(approveUserId)).then(() => {
-      dispatch(setSelectedType('active'));
-      dispatch(setPage(1));
       dispatch(
         fetchUsers({
           userType: currentUserType,
-          selectedType: 'active',
-          page: 1,
+          selectedType: currentSelectedType,
+          page: currentPage,
           pageSize,
         })
       );
@@ -564,13 +601,11 @@ const User = () => {
 
   const handleConfirmReject = () => {
     dispatch(rejectResearcher(rejectUserId)).then(() => {
-      dispatch(setSelectedType('rejectedUsers'));
-      dispatch(setPage(1));
       dispatch(
         fetchUsers({
           userType: currentUserType,
-          selectedType: 'rejectedUsers',
-          page: 1,
+          selectedType: currentSelectedType,
+          page: currentPage,
           pageSize,
         })
       );
@@ -618,14 +653,7 @@ const User = () => {
     ).then(() => {
       dispatch(hideCreateManagerForm());
       if (currentUserType === 'manager' && currentSelectedType === 'active') {
-        dispatch(
-          fetchUsers({
-            userType: 'manager',
-            selectedType: 'active',
-            page: currentPage,
-            pageSize,
-          })
-        );
+        fetchUsersForTable();
       }
     });
   };
@@ -1580,7 +1608,7 @@ const User = () => {
               </div>
             </div>
           </div>
-          <h5 className="mb-3 text-center denser mb-2 text-primary">Users</h5>
+          <h4 className="mb-3 text-center denser mb-2 text-primary">Users</h4>
           <div className="d-flex justify-content-center align-items-center mb-3">
             <div className="position-relative w-100">
               <input

@@ -41,26 +41,55 @@ const Bridge = () => {
     });
   }, [dispatch, currentPage, recordsPerPage, searchTerm]);
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
+  const createNotification = (message, type = 'success') => {
     const notification = document.createElement("div");
     notification.style.position = "fixed";
-    notification.style.top = "0";
-    notification.style.left = "0";
-    notification.textContent = text.includes("0x")
+    notification.style.top = "20px";
+    notification.style.right = "20px";
+    notification.style.maxWidth = "800px";
+    notification.style.backgroundColor = type === 'success' ? "#4caf50" : "#f44336";
+    notification.style.color = "#fff";
+    notification.style.padding = "15px 25px";
+    notification.style.borderRadius = "4px";
+    notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+    notification.style.fontWeight = "500";
+    notification.style.zIndex = "9999";
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(100%)";
+    notification.style.transition = "all 0.5s ease-out";
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+    
+    // Force reflow to ensure transition works
+    notification.offsetHeight;
+    
+    // Show notification
+    notification.style.opacity = "1";
+    notification.style.transform = "translateX(0)";
+
+    return notification;
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    const message = text.includes("0x")
       ? "Ethereum Address copied to clipboard!"
       : "Polkadot Address copied to clipboard!";
-    notification.style.width = "100%";
-    notification.style.backgroundColor = "green";
-    notification.style.color = "#fff";
-    notification.style.textAlign = "center";
-    notification.style.padding = "10px";
-    notification.style.fontWeight = "bold";
-    notification.style.zIndex = "1000";
-    document.body.appendChild(notification);
+    
+    const notification = createNotification(message, 'success');
 
     setTimeout(() => {
-      document.body.removeChild(notification);
+      // Hide notification
+      notification.style.opacity = "0";
+      notification.style.transform = "translateX(100%)";
+      
+      // Remove notification after transition
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 500);
     }, 5000);
   };
 

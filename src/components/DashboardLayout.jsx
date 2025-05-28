@@ -21,7 +21,7 @@ const navItems = [
   { id: "roles-permission", label: "Roles and Permission", icon: "bi-shield-lock", path: "/roles-permission" },
   { id: "strip-transaction", label: "Strip Transaction", icon: "bi-credit-card", path: "/strip-transaction" },
   { id: "product", label: "Product", icon: "bi-box-seam", path: "/product" },
-  { id: "logout", label: "Logout", icon: "bi-box-arrow-right", path: "/logout" },
+  { id: "logout", label: "Logout", icon: "bi-box-arrow-right", path: "/logout" }
 ];
 
 const headerTitles = {
@@ -37,7 +37,7 @@ const headerTitles = {
   "Patients Medical": "Patients Medical",
   "Roles and Permission": "Roles & Permissions",
   "Strip Transaction": "Transaction History",
-  "Product": "Product Manager",
+  "Product": "Product Manager"
 };
 
 const DashboardLayout = () => {
@@ -84,6 +84,17 @@ const DashboardLayout = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showLogoutConfirm) {
+        setShowLogoutConfirm(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showLogoutConfirm]);
+
   const toggleSidebar = () => setCollapsed(!collapsed);
 
   const handleNavItemClick = (path, label) => {
@@ -105,7 +116,7 @@ const DashboardLayout = () => {
 
   return (
     <div className="d-flex flex-column" style={{ minHeight: "100vh" }}>
-      {/* Header - Now at the very top */}
+      {/* Header */}
       <div
         className="bg-primary p-3 d-flex align-items-center justify-content-between position-fixed w-100"
         style={{ height: "70px", borderBottom: "1px solid #ddd", zIndex: 1041 }}
@@ -121,7 +132,7 @@ const DashboardLayout = () => {
               padding: 0
             }}
           >
-          <i className="bi bi-list text-white"></i>
+            <i className="bi bi-list text-white"></i>
           </button>
           <h4 className="text-white flex-grow-1 m-0 text-center">
             {headerTitles[getCurrentPage()] || getCurrentPage()}
@@ -132,7 +143,7 @@ const DashboardLayout = () => {
 
       {/* Main content wrapper */}
       <div className="d-flex" style={{ marginTop: "70px", minHeight: "calc(100vh - 70px)" }}>
-        {/* Sidebar - Now below header */}
+        {/* Sidebar */}
         <div
           className={`bg-light border-end ${
             collapsed && isMobile ? "d-none" : ""
@@ -157,6 +168,14 @@ const DashboardLayout = () => {
               }`}
               style={{ cursor: "pointer" }}
               onClick={() => handleNavItemClick(item.path, item.label)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleNavItemClick(item.path, item.label);
+                }
+              }}
+              role="button"
+              tabIndex={0}
               data-testid={`nav-${item.id}`}
             >
               <i className={`${item.icon} me-3 mx-2`} style={{ fontSize: "1.2rem" }}></i>
@@ -176,6 +195,7 @@ const DashboardLayout = () => {
               bottom: 0
             }}
             onClick={toggleSidebar}
+            data-testid="mobile-overlay"
           ></div>
         )}
 
