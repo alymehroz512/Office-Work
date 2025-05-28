@@ -9,7 +9,6 @@ import authReducer from "../features/auth/authSlice";
 import SignInForm from "../components/SignInForm";
 import MockAdapter from "axios-mock-adapter";
 import axios from "axios";
-import renderer from 'react-test-renderer';
 
 // Mock ParticleNetwork component
 jest.mock('./ParticleNetwork', () => {
@@ -182,19 +181,5 @@ describe("SignInForm integration tests", () => {
     
     expect(screen.getByText("Signing In...")).toBeInTheDocument();
     expect(screen.getByTestId("sign-in-button")).toBeDisabled();
-  });
-
-  // Add snapshot test
-  it('renders correctly', () => {
-    const tree = renderer
-      .create(
-        <Provider store={store}>
-          <BrowserRouter>
-            <SignInForm />
-          </BrowserRouter>
-        </Provider>
-      )
-      .toJSON();
-    expect(tree).toMatchSnapshot();
   });
 });

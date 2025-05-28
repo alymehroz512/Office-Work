@@ -161,10 +161,9 @@ const ApplicationConfigurationPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    dispatch(updateConfig({ config: formValues })).then(() => {
-      dispatch(fetchApplicationConfiguration());
-      setInputChangeMessage("Configuration updated successfully!");
-    });
+    dispatch(updateConfig({ config: formValues }));
+    dispatch(fetchApplicationConfiguration());
+    setInputChangeMessage("Configuration updated successfully!");
   };
 
   const renderInput = (label, field, type = "text") => (
