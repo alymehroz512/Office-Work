@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../features/auth/authSlice";
+import ParticleNetwork from "./ParticleNetwork";
 
 const SignInForm = () => {
   const dispatch = useDispatch();
@@ -53,6 +54,7 @@ const SignInForm = () => {
 
   return (
     <div className="container-fluid SignInFormBackground">
+      <ParticleNetwork />
       <div className="row justify-content-center">
         <div className="col-md-5 p-2">
           <div className="card p-5 shadow SignInFormCard">

@@ -6,6 +6,8 @@ import { configureStore } from '@reduxjs/toolkit';
 import DashboardPage from './DashboardPage';
 import dashboardReducer, { fetchDashboardData } from '../features/dashboard/dashboardSlice';
 import authReducer from '../features/auth/authSlice';
+import { act } from 'react';
+import renderer from 'react-test-renderer';
 
 // Mock dispatch
 const mockDispatch = jest.fn();
@@ -454,5 +456,97 @@ describe('DashboardPage', () => {
       const alert = screen.getByRole('alert');
       expect(alert).toHaveTextContent('Internal Server Error');
     });
+  });
+
+  it('renders correctly in different states', async () => {
+    // Test loading state
+    const loadingStore = configureStore({
+      reducer: {
+        dashboard: dashboardReducer,
+        auth: authReducer,
+      },
+      preloadedState: {
+        dashboard: { loading: true, stats: null, error: null },
+        auth: { token: 'test-token' },
+      },
+    });
+
+    render(
+      <Provider store={loadingStore}>
+        <DashboardPage />
+      </Provider>
+    );
+
+    // Loading state assertions
+    const spinners = screen.getAllByRole('status');
+    expect(spinners).toHaveLength(5); // 5 loading spinners
+    spinners.forEach(spinner => {
+      expect(spinner).toHaveClass('spinner-border');
+      expect(spinner).toHaveClass('text-primary');
+    });
+    expect(screen.getAllByTestId('dashboard-card')).toHaveLength(5); // 5 cards
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    cleanup();
+
+    // Test loaded state with data
+    const loadedStore = configureStore({
+      reducer: {
+        dashboard: dashboardReducer,
+        auth: authReducer,
+      },
+      preloadedState: {
+        dashboard: { loading: false, stats: mockStats, error: null },
+        auth: { token: 'test-token' },
+      },
+    });
+
+    render(
+      <Provider store={loadedStore}>
+        <DashboardPage />
+      </Provider>
+    );
+
+    // Loaded state assertions
+    expect(screen.queryByRole('status')).not.toBeInTheDocument(); // No loading spinners
+    const cards = screen.getAllByTestId('dashboard-card');
+    expect(cards).toHaveLength(5); // 5 cards
+
+    // Check card titles and values
+    expect(screen.getByText('Total Users')).toBeInTheDocument();
+    expect(screen.getByLabelText(`Total Users: ${mockStats.totalUsers}`)).toHaveTextContent(mockStats.totalUsers.toString());
+
+    expect(screen.getByText('Wallet Count')).toBeInTheDocument();
+    expect(screen.getByLabelText(`Wallet Count: ${mockStats.wallet_count}`)).toHaveTextContent(mockStats.wallet_count.toString());
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    cleanup();
+
+    // Test error state
+    const errorStore = configureStore({
+      reducer: {
+        dashboard: dashboardReducer,
+        auth: authReducer,
+      },
+      preloadedState: {
+        dashboard: { loading: false, stats: null, error: 'Error loading dashboard' },
+        auth: { token: 'test-token' },
+      },
+    });
+
+    render(
+      <Provider store={errorStore}>
+        <DashboardPage />
+      </Provider>
+    );
+
+    // Error state assertions
+    expect(screen.queryByRole('status')).not.toBeInTheDocument(); // No loading spinners
+    expect(screen.queryByTestId('dashboard-card')).not.toBeInTheDocument(); // No cards
+    const errorAlert = screen.getByRole('alert');
+    expect(errorAlert).toBeInTheDocument();
+    expect(errorAlert).toHaveClass('alert', 'alert-danger', 'text-center');
+    expect(errorAlert).toHaveTextContent('Error loading dashboard');
   });
 });

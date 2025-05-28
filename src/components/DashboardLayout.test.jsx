@@ -1,12 +1,14 @@
 import React from "react";
 import { describe, expect, it, beforeEach, afterEach, jest } from "@jest/globals";
-import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { BrowserRouter, Routes, Route, MemoryRouter } from 'react-router-dom';
 import DashboardLayout from "./DashboardLayout";
 import authReducer from '../features/auth/authSlice';
 import dashboardReducer from '../features/dashboard/dashboardSlice';
+import { act } from 'react';
+import renderer from 'react-test-renderer';
 
 // Mock child components used in DashboardLayout
 jest.mock("./SignInForm.jsx", () => () => <div data-testid="sign-in-form">Mock SignInForm</div>);
@@ -30,13 +32,15 @@ jest.mock('../features/dashboard/dashboardSlice', () => ({
 
 // Setup window resize mock
 const originalInnerWidth = window.innerWidth;
-const mockResizeWindow = (width) => {
-  Object.defineProperty(window, 'innerWidth', {
-    writable: true,
-    configurable: true,
-    value: width
+const mockResizeWindow = async (width) => {
+  await act(async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: width
+    });
+    window.dispatchEvent(new Event('resize'));
   });
-  window.dispatchEvent(new Event('resize'));
 };
 
 const renderComponent = (preloadedState = {}, initialRoute = '/') => {
@@ -72,7 +76,7 @@ const renderComponent = (preloadedState = {}, initialRoute = '/') => {
 
 describe("DashboardLayout", () => {
   beforeEach(() => {
-    // Reset window size to desktop
+    // Set initial window size to desktop
     mockResizeWindow(1200);
     mockDispatch.mockClear();
   });
@@ -86,6 +90,62 @@ describe("DashboardLayout", () => {
       configurable: true,
       value: originalInnerWidth
     });
+  });
+
+  it('renders all navigation items correctly', () => {
+    const store = configureStore({
+      reducer: {
+        auth: authReducer,
+        dashboard: dashboardReducer,
+      },
+      preloadedState: {
+        auth: { token: 'test-token', user: { id: 1, name: 'Test User' } },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Provider store={store}>
+          <Routes>
+            <Route path="/*" element={<DashboardLayout />} />
+          </Routes>
+        </Provider>
+      </MemoryRouter>
+    );
+    
+    // Test header
+    const headerTitle = screen.getByRole('heading', { name: 'Dashboard' });
+    expect(headerTitle).toBeInTheDocument();
+    expect(headerTitle).toHaveClass('text-white');
+    expect(screen.getByTestId('mobile-menu-btn')).toBeInTheDocument();
+
+    // Test navigation items
+    const navItems = [
+      { text: 'Dashboard', testId: 'nav-dashboard' },
+      { text: 'Application Configuration', testId: 'nav-app-config' },
+      { text: 'Application Status', testId: 'nav-app-status' },
+      { text: 'Bridge', testId: 'nav-bridge' },
+      { text: 'Test Results', testId: 'nav-test-results' },
+      { text: 'Users', testId: 'nav-users' },
+      { text: 'Facilities', testId: 'nav-facilities' },
+      { text: 'AuditLogs', testId: 'nav-audit-logs' },
+      { text: 'Test Formats', testId: 'nav-test-formats' },
+      { text: 'Patients Medical', testId: 'nav-patients-medical' },
+      { text: 'Roles and Permission', testId: 'nav-roles-permission' },
+      { text: 'Strip Transaction', testId: 'nav-strip-transaction' },
+      { text: 'Product', testId: 'nav-product' },
+      { text: 'Logout', testId: 'nav-logout' }
+    ];
+
+    navItems.forEach(item => {
+      const navItem = screen.getByTestId(item.testId);
+      expect(navItem).toBeInTheDocument();
+      expect(navItem).toHaveTextContent(item.text);
+    });
+
+    // Test layout structure
+    const mainContainer = screen.getByTestId('nav-dashboard').closest('.bg-light');
+    expect(mainContainer).toHaveClass('border-end');
   });
 
   describe("Initial Render", () => {
@@ -179,50 +239,44 @@ describe("DashboardLayout", () => {
       renderComponent();
 
       // Switch to portrait (mobile)
-      await act(async () => {
-        mockResizeWindow(500);
-      });
+      await mockResizeWindow(500);
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).toHaveClass("d-none");
 
       // Switch to landscape (tablet)
-      await act(async () => {
-        mockResizeWindow(800);
-      });
+      await mockResizeWindow(800);
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).toHaveClass("d-none");
 
       // Switch back to desktop
-      await act(async () => {
-        mockResizeWindow(1200);
-      });
+      await mockResizeWindow(1200);
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).not.toHaveClass("d-none");
     });
 
     it("should close sidebar after navigation on mobile", async () => {
       renderComponent();
 
-      await act(async () => {
-        mockResizeWindow(500);
-      });
+      await mockResizeWindow(500);
 
-      // Open sidebar
-      fireEvent.click(screen.getAllByTestId("mobile-menu-btn")[0]);
+      await act(async () => {
+        // Open sidebar
+        fireEvent.click(screen.getAllByTestId("mobile-menu-btn")[0]);
+      });
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).not.toHaveClass("d-none");
 
-      // Navigate to Users
-      fireEvent.click(screen.getByTestId("nav-users"));
+      await act(async () => {
+        // Navigate to Users
+        fireEvent.click(screen.getByTestId("nav-users"));
+      });
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).toHaveClass("d-none");
     });
 
     it("should handle rapid window resizing", async () => {
       renderComponent();
 
-      await act(async () => {
-        // Rapid resize events
-        mockResizeWindow(500);
-        mockResizeWindow(1200);
-        mockResizeWindow(800);
-        mockResizeWindow(1200);
-      });
+      // Rapid resize events
+      await mockResizeWindow(500);
+      await mockResizeWindow(1200);
+      await mockResizeWindow(800);
+      await mockResizeWindow(1200);
 
       // Should end up in correct state
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).not.toHaveClass("d-none");
@@ -265,24 +319,28 @@ describe("DashboardLayout", () => {
 
   describe("Mobile Overlay", () => {
     beforeEach(async () => {
-      await act(async () => {
-        mockResizeWindow(500);
-      });
+      await mockResizeWindow(500);
     });
 
-    it("shows overlay when sidebar is open on mobile", () => {
+    it("shows overlay when sidebar is open on mobile", async () => {
       renderComponent();
-      fireEvent.click(screen.getByTestId("mobile-menu-btn"));
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("mobile-menu-btn"));
+      });
       const overlay = screen.getByTestId("mobile-overlay");
       expect(overlay).toBeInTheDocument();
       expect(overlay).toHaveClass("bg-dark", "bg-opacity-50");
     });
 
-    it("closes sidebar when overlay is clicked", () => {
+    it("closes sidebar when overlay is clicked", async () => {
       renderComponent();
-      fireEvent.click(screen.getByTestId("mobile-menu-btn")); // Open sidebar
+      await act(async () => {
+        fireEvent.click(screen.getByTestId("mobile-menu-btn")); // Open sidebar
+      });
       const overlay = screen.getByTestId("mobile-overlay");
-      fireEvent.click(overlay);
+      await act(async () => {
+        fireEvent.click(overlay);
+      });
       expect(screen.getByTestId("nav-dashboard").closest(".bg-light")).toHaveClass("d-none");
     });
   });
@@ -324,5 +382,63 @@ describe("DashboardLayout", () => {
       fireEvent.keyDown(document, { key: 'Escape' });
       expect(screen.queryByText("Confirm Logout")).not.toBeInTheDocument();
     });
+  });
+
+  it('renders correctly in different viewport sizes', async () => {
+    // Desktop view
+    const store = configureStore({
+      reducer: {
+        auth: authReducer,
+        dashboard: dashboardReducer,
+      },
+      preloadedState: {
+        auth: { token: 'test-token', user: { id: 1, name: 'Test User' } },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Provider store={store}>
+          <Routes>
+            <Route path="/*" element={<DashboardLayout />}>
+              <Route index element={<div data-testid="dashboard-page">Mock DashboardPage</div>} />
+              <Route path="app-config" element={<div data-testid="app-config">Mock AppConfig</div>} />
+              <Route path="app-status" element={<div data-testid="app-status">Mock AppStatus</div>} />
+              <Route path="bridge" element={<div data-testid="bridge-page">Mock Bridge</div>} />
+              <Route path="test-results" element={<div data-testid="test-result">Mock TestResult</div>} />
+              <Route path="users" element={<div data-testid="user-page">Mock User</div>} />
+              <Route path="login" element={<div data-testid="sign-in-form">Mock SignInForm</div>} />
+            </Route>
+          </Routes>
+        </Provider>
+      </MemoryRouter>
+    );
+
+    // Desktop view assertions
+    expect(screen.getByTestId('nav-dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-dashboard')).toHaveClass('active');
+    expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
+
+    // Mobile view
+    await act(async () => {
+      await mockResizeWindow(500);
+    });
+
+    // Mobile view assertions
+    expect(screen.getByTestId('mobile-menu-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-dashboard')).toHaveClass('active');
+    expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
+
+    // Tablet view
+    await act(async () => {
+      await mockResizeWindow(800);
+    });
+
+    // Tablet view assertions
+    expect(screen.getByTestId('mobile-menu-btn')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-dashboard')).toBeInTheDocument();
+    expect(screen.getByTestId('nav-dashboard')).toHaveClass('active');
+    expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
   });
 });
