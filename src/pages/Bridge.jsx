@@ -13,8 +13,7 @@ import "../index.css";
 
 const Bridge = () => {
   const dispatch = useDispatch();
-  const { polkadot, ethereum, singleTransaction, errorSingleTransaction } =
-    useSelector((state) => state.bridge);
+  const { polkadot, ethereum } = useSelector((state) => state.bridge);
 
   const [detailMode, setDetailMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,20 +24,15 @@ const Bridge = () => {
   const [isAddressLoading, setIsAddressLoading] = useState(false);
 
   useEffect(() => {
-    setIsAddressLoading(true);
+    setIsTableLoading(true);
     dispatch(
       fetchPolkadotTransactions({
         page: currentPage,
         pageSize: recordsPerPage,
         search: searchTerm,
       })
-    ).finally(() => {
-      setIsTableLoading(false);
-      setIsAddressLoading(false);
-    });
-    dispatch(fetchEthereumAddress()).finally(() => {
-      setIsAddressLoading(false);
-    });
+    ).finally(() => setIsTableLoading(false));
+    dispatch(fetchEthereumAddress());
   }, [dispatch, currentPage, recordsPerPage, searchTerm]);
 
   const createNotification = (message, type = 'success') => {
@@ -93,30 +87,18 @@ const Bridge = () => {
     }, 5000);
   };
 
-  const handleDetailClick = (id) => {
+  const handleDetailClick = async (id) => {
     setDetailMode(true);
     setIsDetailLoading(true);
-    setIsAddressLoading(true);
-    dispatch(fetchSinglePolkadotTransaction(id)).finally(() => {
+    try {
+      await dispatch(fetchSinglePolkadotTransaction(id));
+    } finally {
       setIsDetailLoading(false);
-      setIsAddressLoading(false);
-    });
+    }
   };
 
   const handleBackClick = () => {
     setDetailMode(false);
-    setIsTableLoading(true);
-    setIsAddressLoading(true);
-    dispatch(
-      fetchPolkadotTransactions({
-        page: currentPage,
-        pageSize: recordsPerPage,
-        search: searchTerm,
-      })
-    ).finally(() => {
-      setIsTableLoading(false);
-      setIsAddressLoading(false);
-    });
   };
 
   const formatAddress = (address) => {
@@ -128,6 +110,11 @@ const Bridge = () => {
     setCurrentPage(1);
   };
 
+  const formatDate = (date) => {
+    if (!date) return 'N/A';
+    return moment(date).format('DD-MM-YYYY');
+  };
+
   const renderSkeletonCard = () => (
     <div className="card shadow-sm h-100">
       <div className="card-body d-flex flex-column justify-content-between">
@@ -135,20 +122,24 @@ const Bridge = () => {
           <div
             className="skeleton-line mb-4 mt-3"
             style={{ width: "60%", height: "24px", margin: "0 auto" }}
+            data-testid="skeleton-line"
           ></div>
           <div
             className="skeleton-line mb-0"
             style={{ width: "80%", height: "20px" }}
+            data-testid="skeleton-line"
           ></div>
         </div>
         <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
           <div
             className="skeleton-line"
             style={{ width: "40%", height: "20px" }}
+            data-testid="skeleton-line"
           ></div>
           <div
             className="skeleton-line"
             style={{ width: "20%", height: "30px" }}
+            data-testid="skeleton-line"
           ></div>
         </div>
       </div>
@@ -174,36 +165,42 @@ const Bridge = () => {
               <div
                 className="skeleton-line"
                 style={{ width: "80%", margin: "0 auto" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
             <td>
               <div
                 className="skeleton-line"
                 style={{ width: "80%", margin: "0 auto" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
             <td>
               <div
                 className="skeleton-line"
                 style={{ width: "80%", margin: "0 auto" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
             <td>
               <div
                 className="skeleton-line"
                 style={{ width: "60%", margin: "0 auto" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
             <td>
               <div
                 className="skeleton-line"
                 style={{ width: "60%", margin: "0 auto" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
             <td>
               <div
                 className="skeleton-line"
                 style={{ width: "50%", margin: "0 auto", height: "30px" }}
+                data-testid="skeleton-line"
               ></div>
             </td>
           </tr>
@@ -219,12 +216,14 @@ const Bridge = () => {
           <div
             className="skeleton-line"
             style={{ width: "80px", height: "34px" }}
+            data-testid="skeleton-line"
           ></div>
         </div>
         <div className="w-100 ps-3">
           <div
             className="skeleton-line mb-4"
             style={{ width: "60%", height: "24px" }}
+            data-testid="skeleton-line"
           ></div>
           <hr className="mb-5" />
           {[...Array(8)].map((_, index) => (
@@ -232,6 +231,7 @@ const Bridge = () => {
               <div
                 className="skeleton-line mb-3"
                 style={{ width: "80%", height: "20px" }}
+                data-testid="skeleton-line"
               ></div>
               <hr />
             </div>
@@ -310,7 +310,7 @@ const Bridge = () => {
           <hr />
           <p className="card-text">
             <strong>Created At:</strong>{" "}
-            {moment(tx.createdAt).format("YYYY-MM-DD HH:mm:ss")}
+            {formatDate(tx.CreatedAt || tx.date)}
           </p>
         </div>
       </div>
@@ -318,7 +318,7 @@ const Bridge = () => {
   );
 
   const renderPagination = () => {
-    const totalPages = Math.ceil(polkadot.totalRecords / recordsPerPage) || 1;
+    const totalPages = Math.ceil(polkadot?.totalRecords / recordsPerPage) || 1;
     const pages = [];
 
     pages.push(
@@ -328,6 +328,7 @@ const Bridge = () => {
         style={{ width: "32px", height: "32px", padding: "0" }}
         onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
         disabled={currentPage === 1}
+        aria-label="Previous page"
       >
         <i className="bi bi-chevron-left"></i>
       </button>
@@ -398,6 +399,7 @@ const Bridge = () => {
         style={{ width: "32px", height: "32px", padding: "0" }}
         onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
         disabled={currentPage === totalPages}
+        aria-label="Next page"
       >
         <i className="bi bi-chevron-right"></i>
       </button>
@@ -421,93 +423,91 @@ const Bridge = () => {
 
   return (
     <div className="container my-4">
-      {!detailMode && (
-        <div className="row mb-5">
-          <div className="col-md-6 mb-3">
-            {isAddressLoading || polkadot?.loading ? (
-              renderSkeletonCard()
-            ) : (
-              <div className="card shadow-sm h-100">
-                <div className="card-body d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 className="card-title text-primary mb-4 mt-3 text-center">
-                      Polkadot Address
-                    </h5>
-                    <p className="card-text mb-0">
-                      <strong>
-                        {formatAddress(polkadot?.address || "N/A")}
-                      </strong>
-                    </p>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
-                    <p className="mb-0">
-                      <strong>Balance:</strong>{" "}
-                      {polkadot?.balance
-                        ? polkadot.balance.toFixed(4)
-                        : "0.0000"}{" "}
-                      HIVE
-                    </p>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => copyToClipboard(polkadot?.address)}
-                    >
-                      <FaRegCopy className="me-1" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="col-md-6 mb-3">
-            {isAddressLoading || ethereum?.loading ? (
-              renderSkeletonCard()
-            ) : (
-              <div className="card shadow-sm h-100">
-                <div className="card-body d-flex flex-column justify-content-between">
-                  <div>
-                    <h5 className="card-title text-primary mb-4 mt-3 text-center">
-                      Ethereum Address
-                    </h5>
-                    <p className="card-text mb-0">
-                      <strong>
-                        {formatAddress(ethereum?.address || "N/A")}
-                      </strong>
-                    </p>
-                  </div>
-                  <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
-                    <p className="mb-0">
-                      <strong>Balance:</strong>{" "}
-                      {ethereum?.balance
-                        ? ethereum.balance.toFixed(4)
-                        : "0.0000"}{" "}
-                      HIVE
-                    </p>
-                    <button
-                      className="btn btn-primary btn-sm"
-                      onClick={() => copyToClipboard(ethereum?.address)}
-                    >
-                      <FaRegCopy className="me-1" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {!detailMode ? (
         <>
+          <div className="row mb-5">
+            <div className="col-md-6 mb-3">
+              {isAddressLoading || polkadot?.loading ? (
+                renderSkeletonCard()
+              ) : (
+                <div className="card shadow-sm h-100">
+                  <div className="card-body d-flex flex-column justify-content-between">
+                    <div>
+                      <h5 className="card-title text-primary mb-4 mt-3 text-center">
+                        Polkadot Address
+                      </h5>
+                      <p className="card-text mb-0">
+                        <strong>
+                          {formatAddress(polkadot?.address || "N/A")}
+                        </strong>
+                      </p>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
+                      <p className="mb-0">
+                        <strong>Balance:</strong>{" "}
+                        {polkadot?.balance
+                          ? polkadot.balance.toFixed(4)
+                          : "0.0000"}{" "}
+                        HIVE
+                      </p>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => copyToClipboard(polkadot?.address)}
+                        aria-label="Copy Polkadot address"
+                      >
+                        <FaRegCopy className="me-1" title="Copy address" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="col-md-6 mb-3">
+              {isAddressLoading || ethereum?.loading ? (
+                renderSkeletonCard()
+              ) : (
+                <div className="card shadow-sm h-100">
+                  <div className="card-body d-flex flex-column justify-content-between">
+                    <div>
+                      <h5 className="card-title text-primary mb-4 mt-3 text-center">
+                        Ethereum Address
+                      </h5>
+                      <p className="card-text mb-0">
+                        <strong>
+                          {formatAddress(ethereum?.address || "N/A")}
+                        </strong>
+                      </p>
+                    </div>
+                    <div className="d-flex justify-content-between align-items-center mt-auto pt-3">
+                      <p className="mb-0">
+                        <strong>Balance:</strong>{" "}
+                        {ethereum?.balance
+                          ? ethereum.balance.toFixed(4)
+                          : "0.0000"}{" "}
+                        HIVE
+                      </p>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => copyToClipboard(ethereum?.address)}
+                        aria-label="Copy Ethereum address"
+                      >
+                        <FaRegCopy className="me-1" title="Copy address" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <h4 className="mb-3 text-center mb-2 text-primary">Transactions</h4>
           <div className="d-flex justify-content-center align-items-center mb-3">
             <div className="position-relative w-100">
               <input
-                type="text"
                 className="form-control bg-white pe-5"
-                style={{ color: "#000" }}
                 placeholder="Search by sender key..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ color: "#000" }}
               />
               <i
                 className="fas fa-search position-absolute"
@@ -521,14 +521,16 @@ const Bridge = () => {
               ></i>
             </div>
           </div>
-
+          {polkadot?.error && (
+            <div className="alert alert-danger" role="alert" data-testid="error-message">
+              {polkadot.error}
+            </div>
+          )}
           {isTableLoading || polkadot?.loading ? (
             <>
               {renderSkeletonTable()}
               {renderPagination()}
             </>
-          ) : polkadot?.error ? (
-            <div className="text-danger">Error: {polkadot.error}</div>
           ) : (
             <>
               <table className="table table-responsive table-bordered table-striped text-center align-middle small">
@@ -546,7 +548,7 @@ const Bridge = () => {
                   {polkadot?.transactions?.length > 0 ? (
                     polkadot.transactions.map((tx) => (
                       <tr key={tx._id}>
-                        <td>{moment(tx.CreatedAt).format("DD-MM-YYYY")}</td>
+                        <td>{formatDate(tx.CreatedAt || tx.date)}</td>
                         <td>{formatAddress(tx.senderKey)}</td>
                         <td>{formatAddress(tx.receiverKey)}</td>
                         <td>{String(Math.floor(tx.amount / 1e10))[0]}</td>
@@ -606,18 +608,27 @@ const Bridge = () => {
         </>
       ) : (
         <>
-          <button className="btn btn-primary mb-3" onClick={handleBackClick}>
-            <i className="fas fa-chevron-left me-2"></i>Back
+          <button 
+            className="btn btn-primary mb-3" 
+            onClick={handleBackClick}
+            aria-label="Back to transactions"
+          >
+            <i className="bi bi-chevron-left me-2"></i>Back to transactions
           </button>
-          {isDetailLoading ? (
+          {isDetailLoading || (polkadot && polkadot.loading) ? (
             renderSkeletonDetailCard()
-          ) : errorSingleTransaction ? (
-            <div className="text-danger">Error: {errorSingleTransaction}</div>
-          ) : Array.isArray(singleTransaction) &&
-            singleTransaction.length > 0 ? (
-            singleTransaction.map((tx) => renderTransactionDetailCard(tx))
           ) : (
-            <div className="text-danger">No transaction details found.</div>
+            polkadot?.error ? (
+              <div className="alert alert-danger" role="alert" data-testid="error-message">
+                Error: {polkadot.error}
+              </div>
+            ) : polkadot?.singleTransaction ? (
+              renderTransactionDetailCard(polkadot.singleTransaction)
+            ) : (
+              <div className="alert alert-danger" role="alert" data-testid="error-message">
+                No transaction details found.
+              </div>
+            )
           )}
         </>
       )}

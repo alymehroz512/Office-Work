@@ -40,53 +40,6 @@ import {
 } from "../features/users/userSlice";
 import "../index.css";
 
-const createNotification = (message, type = 'success') => {
-  const notification = document.createElement("div");
-  notification.style.position = "fixed";
-  notification.style.top = "20px";
-  notification.style.right = "20px";
-  notification.style.maxWidth = "800px";
-  notification.style.backgroundColor = type === 'success' ? "#4caf50" : "#f44336";
-  notification.style.color = "#fff";
-  notification.style.padding = "15px 25px";
-  notification.style.borderRadius = "4px";
-  notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
-  notification.style.fontWeight = "500";
-  notification.style.zIndex = "9999";
-  notification.style.opacity = "0";
-  notification.style.transform = "translateX(100%)";
-  notification.style.transition = "all 0.5s ease-out";
-  notification.textContent = message;
-
-  document.body.appendChild(notification);
-  
-  // Force reflow to ensure transition works
-  notification.offsetHeight;
-  
-  // Show notification
-  notification.style.opacity = "1";
-  notification.style.transform = "translateX(0)";
-
-  return notification;
-};
-
-const showNotification = (message, type = "success") => {
-  const notification = createNotification(message, type);
-
-  setTimeout(() => {
-    // Hide notification
-    notification.style.opacity = "0";
-    notification.style.transform = "translateX(100%)";
-    
-    // Remove notification after transition
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        document.body.removeChild(notification);
-      }
-    }, 500);
-  }, 5000);
-};
-
 const EditUserForm = ({ user, onSubmit, onCancel, updateLoading }) => {
   const [localFormData, setLocalFormData] = useState({
     firstName: user?.firstName || "",
@@ -357,6 +310,53 @@ const AddManagerForm = ({ onSubmit, onCancel, createManagerLoading }) => {
   );
 };
 
+const createNotification = (message, type = 'success') => {
+  const notification = document.createElement("div");
+  notification.style.position = "fixed";
+  notification.style.top = "20px";
+  notification.style.right = "20px";
+  notification.style.maxWidth = "800px";
+  notification.style.backgroundColor = type === 'success' ? "#4caf50" : "#f44336";
+  notification.style.color = "#fff";
+  notification.style.padding = "15px 25px";
+  notification.style.borderRadius = "4px";
+  notification.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
+  notification.style.fontWeight = "500";
+  notification.style.zIndex = "9999";
+  notification.style.opacity = "0";
+  notification.style.transform = "translateX(100%)";
+  notification.style.transition = "all 0.5s ease-out";
+  notification.textContent = message;
+
+  document.body.appendChild(notification);
+  
+  // Force reflow to ensure transition works
+  notification.offsetHeight;
+  
+  // Show notification
+  notification.style.opacity = "1";
+  notification.style.transform = "translateX(0)";
+
+  return notification;
+};
+
+const showNotification = (message, type = "success") => {
+  const notification = createNotification(message, type);
+
+  setTimeout(() => {
+    // Hide notification
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(100%)";
+    
+    // Remove notification after transition
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        document.body.removeChild(notification);
+      }
+    }, 500);
+  }, 5000);
+};
+
 const ActionResponseCard = ({ response, error, title, onClose }) => {
   const { currentUserType, currentSelectedType } = useSelector((state) => state.users);
   
@@ -366,15 +366,15 @@ const ActionResponseCard = ({ response, error, title, onClose }) => {
     
     if (error) {
       showNotification(
-        `${title} Failed for ${selectedTypeFormatted} ${userTypeFormatted}: ${error.message}`,
+        `${title} Failed for ${selectedTypeFormatted} ${userTypeFormatted} ${error.message}`,
         "error"
       );
     } else if (response) {
-      let message = `${title} Successful: `;
+      let message = `${title} Successful `;
       if (response.data) {
-        message += `${response.data.firstName} ${response.data.lastName} (${userTypeFormatted})`;
+        message += `${response.data.firstName} ${response.data.lastName} ${userTypeFormatted}`;
       } else {
-        message += `${selectedTypeFormatted} ${userTypeFormatted} - ${response.message || "Action completed successfully"}`;
+        message += `${selectedTypeFormatted} ${userTypeFormatted} ${response.message || "Action completed successfully"}`;
       }
       showNotification(message, "success");
     }

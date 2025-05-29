@@ -34,16 +34,15 @@ body {
 
 /* SignIn Styling */
 .SignInFormBackground {
-  background-color: #000;
   width: 100%;
-  height: 110dvh;
+  height: 100dvh;
 }
 
 .SignInFormCard {
   background-color: #1c1c1c; /* light black */
   color: #fff;
   border: none;
-  margin-top: 70px;
+  margin-top: 55px;
 }
 
 .lock-icon-wrapper {
